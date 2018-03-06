@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.dagreD3 = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.dagreD3 = f()}})(function(){var define,module,exports;return (function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
 /**
  * @license
  * Copyright (c) 2012-2013 Chris Pettitt
@@ -760,16 +760,47 @@ module.exports = addTextLabel;
  * Attaches a text label to the specified root. Handles escape sequences.
  */
 function addTextLabel(root, node) {
+  var cssMapping = node.cssMapping || {}      
+  var regString = ""
+  Object.keys(cssMapping).map(function(v,i){
+      if(i===0){
+        regString = '(\\'+v+'.*?\\'+v+')'
+      }
+      else{
+        regString = regString + '|(\\'+v+'.*?\\'+v+')'
+      }
+  })    
+  var cssReg = new RegExp(regString,'g')	
+
   var domNode = root.append("text");
 
   var lines = processEscapeSequences(node.label).split("\n");
   for (var i = 0; i < lines.length; i++) {
-    domNode
+    var tspan = domNode
       .append("tspan")
         .attr("xml:space", "preserve")
         .attr("dy", "1em")
-        .attr("x", "1")
-        .text(lines[i]);
+        .attr("x", "1");
+
+        if(regString) {
+          lines[i].split(cssReg).forEach(function(v){
+            if(v){
+              var allStr = v
+              var classKey = allStr.slice(0,2)
+              var content = allStr
+              if(classKey && cssMapping[classKey]){
+                content = allStr.slice(2,allStr.length-2)
+              }
+              tspan.append("tspan")
+                .attr("class", cssMapping[classKey]||'')
+                .text(content);
+            }
+          })
+        }
+        else {
+          tspan.text(lines[i]);
+        }
+    
   }
 
   util.applyStyle(domNode, node.labelStyle);
@@ -1210,7 +1241,7 @@ function applyTransition(selection, g) {
 }
 
 },{"./lodash":21}],28:[function(require,module,exports){
-module.exports = "0.6.1";
+module.exports = "0.6.2-pre";
 
 },{}]},{},[1])(1)
 });
